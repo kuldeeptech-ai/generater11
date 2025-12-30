@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite AI Visual Analyst</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><i class="fa-solid fa-eye"></i> Elite AI Visual Analyst</h1>
+            <p>Upload an image to generate professional cinematic prompts.</p>
+        </header>
+
+        <div class="api-section">
+            <label for="apiKey">Enter Gemini API Key:</label>
+            <input type="password" id="apiKey" placeholder="Paste your API Key here (starts with AIza...)" autocomplete="off">
+            <small><a href="https://aistudio.google.com/app/apikey" target="_blank">Get free API Key</a></small>
+        </div>
+
+        <div class="upload-section">
+            <div class="file-drop-area" id="dropArea">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span class="file-msg">Drag & Drop or Click to Upload Image</span>
+                <input class="file-input" type="file" id="imageInput" accept="image/png, image/jpeg, image/webp">
+            </div>
+            <div id="previewContainer" class="hidden">
+                <img id="imagePreview" src="" alt="Image Preview">
+            </div>
+        </div>
+
+        <button id="generateBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Prompt</button>
+
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Analyzing Image & Engineering Prompt...</p>
+        </div>
+
+        <div id="resultContainer" class="hidden">
+            <h3><i class="fa-solid fa-terminal"></i> Generated Result</h3>
+            <div class="result-box">
+                <pre id="outputText"></pre>
+                <button id="copyBtn" class="copy-btn"><i class="fa-regular fa-copy"></i> Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
