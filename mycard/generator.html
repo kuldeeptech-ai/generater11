@@ -206,7 +206,20 @@ function addSocial(){
 /* ===== GENERATE ===== */
 function generate(){
   const fn=fullName.value, sh=shop.value, em=email.value, ph=phone.value, img=photoUrl.value;
+<button onclick="autoDeploy()" style="background:#00c7b7;color:#000">
+🚀 Deploy Live
+</button>
 
+<div id="liveBox" style="
+  margin-top:10px;
+  padding:10px;
+  background:#111;
+  border-radius:10px;
+  display:none;
+">
+  <div style="font-size:13px;opacity:.7">Live URL</div>
+  <input id="liveUrl" readonly>
+</div>
   const icons={
     instagram:"fa-instagram",whatsapp:"fa-whatsapp",facebook:"fa-facebook",
     linkedin:"fa-linkedin",twitter:"fa-x-twitter",
@@ -280,6 +293,38 @@ function downloadHTML(){
   a.download="index.html";
   a.click();
 }
+  async function autoDeploy(){
+  if(!result.value){
+    showToast("Generate HTML first");
+    return;
+  }
+
+  showToast("Deploying...");
+
+  try{
+    const res = await fetch(
+      "https://auto-deploy-worker.kuldeeptech-ai.workers.dev",
+      {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ html: result.value })
+      }
+    );
+
+    const data = await res.json();
+
+    if(data.url){
+      document.getElementById("liveUrl").value = data.url;
+      document.getElementById("liveBox").style.display = "block";
+      showToast("Live deployed");
+      window.open(data.url, "_blank");
+    }else{
+      showToast("Deploy failed");
+    }
+  }catch(e){
+    showToast("Server error");
+  }
+  }
 </script>
 
 </body>
