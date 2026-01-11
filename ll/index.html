@@ -53,7 +53,11 @@ db.collection("chats")
 
       const div = document.createElement("div");
       div.className = "chat";
-      div.innerHTML = `<b>${other}</b><br><small>${data.last || ""}</small>`;
+      div.innerHTML = `
+  <b>${other}</b><br>
+  <small>Chat ID: ${doc.id}</small><br>
+  <small>${data.last || ""}</small>
+`;
 
       div.onclick = () => {
         location.href = "chat.html?id=" + doc.id;
