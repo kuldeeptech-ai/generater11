@@ -28,6 +28,10 @@
 </div>
 
 <script>
+  // Notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
 /* ---------- FIREBASE ---------- */
 firebase.initializeApp({
   apiKey: "AIzaSyAI5nA49KkR5VsPn3QpjWOdM0lv2nEQu3U",
@@ -78,7 +82,11 @@ db.collection("chats")
 
       messages.appendChild(div);
     });
-
+if (document.hidden && m.from !== myCode) {
+  new Notification("New message from " + other, {
+    body: m.text
+  });
+  }
     messages.scrollTop = messages.scrollHeight;
   });
 
