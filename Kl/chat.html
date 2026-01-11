@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+
+<body>
+<div class="app">
+
+  <header>
+    <button onclick="goHome()">Back</button>
+    <h3 id="chatWith"></h3>
+  </header>
+
+  <div id="messages"></div>
+
+  <div class="send">
+    <input id="msg" placeholder="Message">
+    <button onclick="send()">Send</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------- FIREBASE ---------- */
+firebase.initializeApp({
+  apiKey: "AIzaSyAI5nA49KkR5VsPn3QpjWOdM0lv2nEQu3U",
+  authDomain: "private-chat-app-2986d.firebaseapp.com",
+  projectId: "private-chat-app-2986d"
+});
+var db = firebase.firestore();
+
+/* ---------- USER ---------- */
+const myCode = localStorage.getItem("code");
+if (!myCode) location.href = "index.html";
+
+/* ---------- CHAT ID ---------- */
+const params = new URLSearchParams(location.search);
+const chatId = params.get("id");
+if (!chatId) location.href = "index.html";
+
+/* ---------- OTHER USER ---------- */
+const parts = chatId.split("__");
+const other = parts[0] === myCode ? parts[1] : parts[0];
+chatWith.innerText = other;
+
+/* ---------- REALTIME MESSAGES ---------- */
+db.collection("chats")
+  .doc(chatId)
+  .collection("messages")
+  .orderBy("time")
+  .onSnapshot(snap => {
+    messages.innerHTML = "";
+
+    snap.forEach(d => {
+      const m = d.data();
+      const div = document.createElement("div");
+      div.className = m.from === myCode ? "me" : "them";
+      div.innerText = m.text;
+      messages.appendChild(div);
+    });
+
+    messages.scrollTop = messages.scrollHeight;
+  });
+
+/* ---------- SEND MESSAGE ---------- */
+function send() {
+  if (!msg.value) return;
+
+  // add message
+  db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .add({
+      from: myCode,
+      text: msg.value,
+      time: Date.now()
+    });
+
+  // update parent chat (for home page)
+  db.collection("chats")
+    .doc(chatId)
+    .set({
+      users: [myCode, other],
+      last: msg.value,
+      time: Date.now()
+    }, { merge: true });
+
+  msg.value = "";
+}
+
+function goHome() {
+  location.href = "index.html";
+}
+</script>
+</body>
+</html>
