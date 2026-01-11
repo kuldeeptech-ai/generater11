@@ -7,15 +7,23 @@
 
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/906/906361.png">
 </head>
 
 <body>
 <div class="app">
 
   <header>
-    <h3>Chats</h3>
+
+  <div>
+    <h3 id="username">User</h3>
     <small id="myCode"></small>
+  </div>
+  <button class="miniBtn" onclick="changeUsername()">Edit</button>
+
   </header>
 
   <button class="newBtn" onclick="newChat()">New Chat</button>
@@ -33,6 +41,21 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
+  // USERNAME
+let username = localStorage.getItem("username");
+if (!username) {
+  username = prompt("Enter your username") || "User";
+  localStorage.setItem("username", username);
+}
+document.getElementById("username").innerText = username;
+
+function changeUsername() {
+  const n = prompt("New username");
+  if (n) {
+    localStorage.setItem("username", n);
+    location.reload();
+  }
+}
 /* ---------- USER CODE ---------- */
 let myCode = localStorage.getItem("code");
 if (!myCode) {
