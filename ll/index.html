@@ -39,31 +39,41 @@ if (!myCode) {
   myCode = "U-" + Math.random().toString(36).substr(2,5);
   localStorage.setItem("code", myCode);
 }
-myCodeEl.innerText = "Your code: " + myCode;
+document.getElementById("myCode").innerText = "Your code: " + myCode;
 
-/* ---------- REALTIME CHAT LIST ---------- */
+/* ---------- REALTIME CHAT LIST (WITH CHAT ID) ---------- */
 db.collection("chats")
   .where("users", "array-contains", myCode)
   .onSnapshot(snap => {
+
+    const chatList = document.getElementById("chatList");
     chatList.innerHTML = "";
+
+    if (snap.empty) {
+      chatList.innerHTML = "<p style='opacity:.6'>No chats yet</p>";
+      return;
+    }
 
     snap.forEach(doc => {
       const data = doc.data();
-      const other = data.users.find(u => u !== myCode);
+      const other = (data.users || []).find(u => u !== myCode) || "Unknown";
 
       const div = document.createElement("div");
       div.className = "chat";
-      div.innerHTML = `
-  <b>${other}</b><br>
-  <small>Chat ID: ${doc.id}</small><br>
-  <small>${data.last || ""}</small>
-`;
 
+      // 🔥 CHAT ID CLEARLY SHOWN
+      div.innerHTML = `
+        <b>User: ${other}</b><br>
+        <small style="opacity:.7">Chat ID: ${doc.id}</small><br>
+        <small>${data.last || ""}</small>
+      `;
+
+      // open chat
       div.onclick = () => {
         location.href = "chat.html?id=" + doc.id;
       };
 
-      // 🔥 Long press delete chat
+      // long press delete
       let timer;
       div.addEventListener("touchstart", () => {
         timer = setTimeout(() => {
