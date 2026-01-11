@@ -99,3 +99,22 @@ header {
 #messages::-webkit-scrollbar {
   display: none;
 }
+
+.miniBtn {
+  background: #334155;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+header small {
+  font-size: 11px;
+  opacity: 0.7;
+}
