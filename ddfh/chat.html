@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#22c55e">
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+
+<body>
+<div class="app">
+
+  <header>
+  <button id="blockBtn" onclick="toggleBlock()">Block</button>
+    <button onclick="goHome()">Back</button>
+    <h3 id="chatWith"></h3>
+  </header>
+
+  <div id="messages"></div>
+
+  <div class="send">
+    <input id="msg" placeholder="Message">
+    <button onclick="send()">Send</button>
+  </div>
+
+</div>
+<div class="send">
+<input type="file" id="imageInput" accept="image/*" hidden>
+<button onclick="pickImage()">📷</button>
+<button onclick="recordVoice()">🎙️</button>
+<input id="msg" placeholder="Message">
+<button onclick="send()">➤</button>
+</div>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAI5nA49KkR5VsPn3QpjWOdM0lv2nEQu3U",
+  authDomain: "private-chat-app-2986d.firebaseapp.com",
+  projectId: "private-chat-app-2986d"
+});
+const db = firebase.firestore();
+
+let isBlocked = false;
+let blockedByMe = false;
+
+// listen my block list
+db.collection("users").doc(myUid)
+  .onSnapshot(doc => {
+    const blocked = doc.data()?.blocked || [];
+    blockedByMe = blocked.includes(otherUid);
+    updateBlockUI();
+  });
+
+// listen other user's block list
+db.collection("users").doc(otherUid)
+  .onSnapshot(doc => {
+    const blocked = doc.data()?.blocked || [];
+    isBlocked = blocked.includes(myUid);
+    updateBlockUI();
+  });
+
+function updateBlockUI() {
+  const btn = document.getElementById("blockBtn");
+  const sendBar = document.querySelector(".send");
+
+  if (blockedByMe) {
+    btn.innerText = "Unblock";
+    sendBar.style.opacity = "0.5";
+  } else {
+    btn.innerText = "Block";
+    sendBar.style.opacity = "1";
+  }
+
+  if (isBlocked) {
+    sendBar.style.display = "none";
+  } else {
+    sendBar.style.display = "flex";
+  }
+}
+
+function toggleBlock() {
+  const ref = db.collection("users").doc(myUid);
+
+  if (blockedByMe) {
+    ref.update({
+      blocked: firebase.firestore.FieldValue.arrayRemove(otherUid)
+    });
+  } else {
+    ref.update({
+      blocked: firebase.firestore.FieldValue.arrayUnion(otherUid)
+    });
+  }
+}
+
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+const myCode = localStorage.getItem("code");
+const params = new URLSearchParams(location.search);
+const chatId = params.get("id");
+
+const parts = chatId.split("__");
+const other = parts[0] === myCode ? parts[1] : parts[0];
+chatWith.innerText = other;
+
+db.collection("chats").doc(chatId)
+  .collection("messages")
+  .orderBy("time")
+  .onSnapshot(snap => {
+    messages.innerHTML = "";
+// mark received messages as delivered
+if (m.from !== myCode && m.status === "sent") {
+  d.ref.update({ status: "delivered" });
+}
+// hide messages if blocked
+if (isBlocked && m.from !== myUid) return;
+// mark all received messages as seen
+db.collection("chats")
+  .doc(chatId)
+  .collection("messages")
+  .where("from", "!=", myCode)
+  .where("status", "!=", "seen")
+  .get()
+  .then(snap => {
+    snap.forEach(d => {
+      d.ref.update({ status: "seen" });
+    });
+  });
+    snap.forEach(d => {
+      const m = d.data();
+      const div = document.createElement("div");
+      const div = document.createElement("div");
+div.className = "message " + (m.from === myCode ? "me" : "them");
+
+if (m.type === "text") {
+  div.innerHTML = `<div>${m.text}</div>`;
+}
+
+if (m.type === "image") {
+  div.innerHTML = `<img src="${m.mediaUrl}" class="chatImage">`;
+}
+
+if (m.type === "audio") {
+  div.innerHTML = `
+    <audio controls>
+      <source src="${m.mediaUrl}">
+    </audio>
+  `;
+}
+
+// meta (time + status)
+const meta = document.createElement("div");
+meta.className = "meta";
+
+const d = new Date(m.time);
+let ticks = "✓";
+if (m.status === "delivered") ticks = "✓✓";
+if (m.status === "seen") ticks = "✓✓";
+
+meta.innerText =
+  d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0") + " " + ticks;
+
+meta.style.color = m.status === "seen" ? "#34b7f1" : "#555";
+
+div.appendChild(meta);
+messages.appendChild(div);
+
+    messages.scrollTop = messages.scrollHeight;
+  });
+if (blockedByMe || isBlocked) {
+  alert("You cannot send messages in this chat");
+  return;
+}
+function send() {
+  if (!msg.value) return;
+
+  db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .add({
+      from: myCode,
+      text: msg.value,
+      time: Date.now(),
+      status: "sent"   // ✅ PHASE 2
+    });
+
+  db.collection("chats")
+    .doc(chatId)
+    .set({
+      users: [myCode, other],
+      last: msg.value,
+      time: Date.now()
+    }, { merge: true });
+
+  msg.value = "";
+}
+
+function pickImage() {
+  document.getElementById("imageInput").click();
+}
+
+imageInput.onchange = async () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+
+  const ref = firebase.storage()
+    .ref("images/" + Date.now() + "_" + file.name);
+
+  await ref.put(file);
+  const url = await ref.getDownloadURL();
+
+  sendMedia("image", url);
+};
+
+let recorder;
+let audioChunks = [];
+
+async function recordVoice() {
+  if (!recorder) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => audioChunks.push(e.data);
+
+    recorder.onstop = async () => {
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      audioChunks = [];
+
+      const ref = firebase.storage()
+        .ref("audio/" + Date.now() + ".webm");
+
+      await ref.put(blob);
+      const url = await ref.getDownloadURL();
+
+      sendMedia("audio", url);
+    };
+
+    recorder.start();
+    alert("Recording started");
+  } else {
+    recorder.stop();
+    recorder = null;
+    alert("Recording sent");
+  }
+}
+
+function sendMedia(type, url) {
+  db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .add({
+      type,
+      mediaUrl: url,
+      text: "",
+      from: myCode,
+      time: Date.now(),
+      status: "sent"
+    });
+
+  db.collection("chats")
+    .doc(chatId)
+    .set({
+      users: [myCode, other],
+      last: type === "image" ? "📷 Image" : "🎙️ Voice",
+      time: Date.now()
+    }, { merge: true });
+}
+
+function goHome() {
+  location.href = "index.html";
+}
+</script>
+</body>
+</html>
